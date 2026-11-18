@@ -25,7 +25,12 @@ export type Stats = {
   by_breakfast: { breakfast: string; count: number }[];
 };
 
-export type UtmInput = { source: string; medium: string; campaign: string };
+// 정원 숫자가 비정상(0 · 빈 값)이어도 화면이 깨지지 않게 (나누기 0 방지)
+export function safeCapacity(stats: Stats) {
+  return stats.capacity > 0 ? stats.capacity : 1;
+}
+
+export type UtmInput ={ source: string; medium: string; campaign: string };
 
 export type ApplicationInput = {
   name: string;
