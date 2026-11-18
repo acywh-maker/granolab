@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getSupabase } from "@/lib/supabase";
 import type { Stats } from "@/lib/campaign";
 
@@ -9,15 +9,14 @@ import type { Stats } from "@/lib/campaign";
 // 공개 채널이라 누구나 가짜 신호를 보낼 수 있어서, 신호에 담긴 숫자는 믿지 않고
 // "바뀌었어요" 알림으로만 써요. 숫자는 항상 DB 집계 창구에서 다시 읽어요.
 //
-// 채널은 페이지에서 하나만 만들고 지우지 않아요.
-// 연결이 끊기면 Supabase 도구가 알아서 다시 연결해 줘요.
+// 채널은 페이지에서 하나만 만들어 같이 써요. 잠깐 끊기면 Supabase 도구가 알아서 다시 연결하고,
+// 완전히 닫히면(CLOSED) 다음에 화면이 열릴 때 새로 만들어요.
 
 type Listener = () => void;
 const signalListeners = new Set<Listener>();
 const statusListeners = new Set<(live: boolean) => void>();
 let started = false;
 let isLive = false;
-let everConnected = false;
 
 const notifyAll = () => signalListeners.forEach((fn) => fn());
 
@@ -30,12 +29,10 @@ function ensureChannel() {
     .subscribe((status) => {
       isLive = status === "SUBSCRIBED";
       statusListeners.forEach((fn) => fn(isLive));
-      if (status === "SUBSCRIBED") {
-        // 처음 연결 때는 서버가 방금 준 숫자가 최신이라 그대로 두고,
-        // 끊겼다 다시 연결됐을 때만 그동안 놓친 신청을 위해 한 번 새로 읽어요
-        if (everConnected) notifyAll();
-        everConnected = true;
-      }
+      // 연결되면(처음 · 다시) 한 번 새로 읽기 — 화면이 뜨고 연결되기까지 들어온 신청을 놓치지 않게
+      if (status === "SUBSCRIBED") notifyAll();
+      // 완전히 닫히면 다음에 새로 만들 수 있게
+      if (status === "CLOSED") started = false;
     });
 }
 
@@ -52,6 +49,12 @@ export function useLiveStats(initial: Stats) {
     setStats(initial);
   }
 
+  // 서버가 새 숫자를 줄 때마다 번호를 올려서, 그 전에 시작한 읽기 결과는 버려요
+  const generation = useRef(0);
+  useEffect(() => {
+    generation.current += 1;
+  }, [initial]);
+
   useEffect(() => {
     ensureChannel();
     let alive = true;
@@ -62,12 +65,20 @@ export function useLiveStats(initial: Stats) {
     // 한 번에 하나씩만 읽어요 → 결과가 뒤바뀌어 도착할 일이 없어요
     const fetchStats = async () => {
       running = true;
-      do {
-        again = false;
-        const { data, error } = await getSupabase().rpc("granolab_stats");
-        if (alive && !error && data) setStats(data as unknown as Stats);
-      } while (again && alive);
-      running = false;
+      try {
+        do {
+          again = false;
+          const startedAt = generation.current;
+          const { data, error } = await getSupabase().rpc("granolab_stats");
+          if (alive && !error && data && startedAt === generation.current) {
+            setStats(data as unknown as Stats);
+          }
+        } while (again && alive);
+      } catch {
+        // 네트워크 문제 등 — 다음 신호 때 다시 시도해요
+      } finally {
+        running = false;
+      }
     };
 
     const reload = () => {

@@ -6,7 +6,6 @@ import { useLiveStats } from "@/components/useLiveStats";
 import {
   BREAKFAST_OPTIONS,
   checkApplication,
-  safeCapacity,
   formatDeadline,
   formatRemaining,
   type Stats,
@@ -43,7 +42,7 @@ export default function SignupSection({ stats: initial, utm, serverNow }: Props)
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-stone-100">
             <div
               className="h-full rounded-full bg-emerald-600 transition-all duration-700"
-              style={{ width: `${Math.min((stats.total / safeCapacity(stats)) * 100, 100)}%` }}
+              style={{ width: `${Math.min((stats.total / stats.capacity) * 100, 100)}%` }}
             />
           </div>
         </div>

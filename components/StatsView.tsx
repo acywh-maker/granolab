@@ -1,7 +1,7 @@
 "use client"; // 실시간으로 숫자가 바뀌어서 클라이언트 컴포넌트
 
 import { useLiveStats } from "@/components/useLiveStats";
-import { breakfastLabel, safeCapacity, type Stats } from "@/lib/campaign";
+import { breakfastLabel, type Stats } from "@/lib/campaign";
 
 export default function StatsView({ stats: initial }: { stats: Stats }) {
   // 새 신청 신호가 오면 → 집계 창구(숫자만)를 다시 읽어서 채널별 · 습관별 막대까지 바꾸기
@@ -9,7 +9,7 @@ export default function StatsView({ stats: initial }: { stats: Stats }) {
 
   const total = stats.total;
   const left = Math.max(stats.capacity - total, 0);
-  const rate = Math.round((total / safeCapacity(stats)) * 100);
+  const rate = Math.round((total / stats.capacity) * 100);
 
   return (
     <div className="flex flex-col gap-6">
