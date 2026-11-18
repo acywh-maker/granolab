@@ -6,7 +6,7 @@
 // 2) 이름에 버전 번호가 붙은 파일(/_next/static/...)은 바뀌지 않으니 저장해 두고 재사용해요.
 // 3) 신청(POST) · Supabase 요청(다른 주소)은 절대 건드리지 않아요 → 개인정보를 저장하지 않아요.
 
-const VERSION = "granolab-v3";
+const VERSION = "granolab-v4";
 const PAGES = `${VERSION}-pages`;
 const ASSETS = `${VERSION}-assets`;
 const OFFLINE_URL = "/";
