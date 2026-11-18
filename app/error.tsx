@@ -11,8 +11,8 @@ export default function Error({ error, retry }: { error: unknown; retry: () => v
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col items-center justify-center gap-4 px-6 py-16 text-center">
       <p className="text-4xl">🥣</p>
-      <h1 className="text-xl font-bold text-stone-800">잠시 문제가 생겼어요</h1>
-      <p className="text-stone-600">잠시 후 다시 시도해 주세요.</p>
+      <h1 className="text-xl font-bold text-[#CACFAB]">잠시 문제가 생겼어요</h1>
+      <p className="text-[#796E5B]">잠시 후 다시 시도해 주세요.</p>
       <button
         type="button"
         onClick={() => retry()}

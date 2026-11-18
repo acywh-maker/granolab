@@ -18,7 +18,7 @@ export default function DonePage({ searchParams }: PageProps<"/done">) {
         </ul>
       </div>
 
-      <Link href="/" className="min-h-12 rounded-2xl px-6 py-3 font-semibold text-emerald-800 hover:bg-emerald-50">
+      <Link href="/" className="min-h-12 rounded-2xl px-6 py-3 font-semibold text-[#CACFAB] hover:bg-white/10">
         처음으로
       </Link>
     </main>
@@ -31,10 +31,10 @@ async function DoneMessage({ searchParams }: { searchParams: PageProps<"/done">[
   return (
     <div className="flex flex-col gap-2">
       <p className="text-5xl">🎉</p>
-      <h1 className="text-2xl font-extrabold text-stone-900">
+      <h1 className="text-2xl font-extrabold text-[#CACFAB]">
         {Number.isInteger(rank) && rank > 0 ? `${rank.toLocaleString("ko-KR")}번째 신청자예요!` : "신청이 완료됐어요!"}
       </h1>
-      <p className="text-stone-600">말차 크런치 체험단 신청이 접수됐어요.</p>
+      <p className="text-[#796E5B]">말차 크런치 체험단 신청이 접수됐어요.</p>
     </div>
   );
 }

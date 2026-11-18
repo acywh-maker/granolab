@@ -13,12 +13,12 @@ export default function Home({ searchParams }: PageProps<"/">) {
         <p className="mx-auto w-fit rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-800">
           출시 전 체험단 · 선착순 100명
         </p>
-        <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-stone-900 sm:text-5xl">
+        <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-[#CACFAB] sm:text-5xl">
           🍵 말차 크런치,
           <br />
           가장 먼저 맛보세요
         </h1>
-        <p className="text-lg text-stone-600">바쁜 아침, 한 그릇이면 충분해요.</p>
+        <p className="text-lg text-[#796E5B]">바쁜 아침, 한 그릇이면 충분해요.</p>
       </section>
 
       {/* 혜택 3가지 */}

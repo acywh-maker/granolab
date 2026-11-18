@@ -25,7 +25,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="ko"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col bg-[#f7f5ef] text-stone-900">
+      <body className="flex min-h-full flex-col bg-[#1C1917] text-stone-200">
         <header className="border-b border-emerald-900/10 bg-[#f7f5ef]/90 backdrop-blur">
           <div className="mx-auto flex w-full max-w-2xl items-center justify-between px-4 py-3 sm:px-6">
             <Link href="/" className="text-lg font-extrabold tracking-tight text-emerald-800">
