@@ -42,3 +42,5 @@ next-env.d.ts
 
 .vercel
 .env*
+# 빈칸만 있는 설정 양식은 예외로 올려요 (진짜 키가 든 .env.local 은 계속 안 올라가요)
+!.env.example
