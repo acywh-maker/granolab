@@ -16,7 +16,6 @@ type Props = { stats: Stats; utm: UtmInput; serverNow: number };
 
 export default function SignupSection({ stats: initial, utm, serverNow }: Props) {
   const { stats, live } = useLiveStats(initial);
-  const total = stats.total;
   const [now, setNow] = useState(serverNow);
 
   // 1분마다 남은 시간 다시 계산
@@ -25,7 +24,7 @@ export default function SignupSection({ stats: initial, utm, serverNow }: Props)
     return () => clearInterval(timer);
   }, []);
 
-  const left = Math.max(stats.capacity - total, 0);
+  const left = Math.max(stats.capacity - stats.total, 0);
   const remaining = formatRemaining(stats.deadline, now);
   const full = left === 0;
   const ended = remaining === null;
@@ -43,7 +42,7 @@ export default function SignupSection({ stats: initial, utm, serverNow }: Props)
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-stone-100">
             <div
               className="h-full rounded-full bg-emerald-600 transition-all duration-700"
-              style={{ width: `${Math.min((total / stats.capacity) * 100, 100)}%` }}
+              style={{ width: `${Math.min((stats.total / stats.capacity) * 100, 100)}%` }}
             />
           </div>
         </div>
@@ -88,7 +87,8 @@ function ApplyForm({ utm }: { utm: UtmInput }) {
   const [state, action, pending] = useActionState<ApplyState, FormData>(applyAction, { message: "" });
   const [localError, setLocalError] = useState("");
   // 브라우저에서 먼저 검사한 문구가 있으면 그걸, 없으면 서버가 돌려준 문구
-  const message = localError || state.message;
+  // (새로 신청하는 중에는 지난번 서버 문구를 숨겨서 헷갈리지 않게)
+  const message = localError || (pending ? "" : state.message);
 
   const fieldClass =
     "w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-base outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20";

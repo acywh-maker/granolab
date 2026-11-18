@@ -16,6 +16,7 @@ function toKorean(error: { code?: string; message?: string }) {
   const msg = error.message ?? "";
   if (msg.includes("GRANOLAB_FULL")) return "모집이 마감됐어요. 관심 가져 주셔서 고마워요!";
   if (msg.includes("GRANOLAB_CLOSED")) return "이벤트가 종료됐어요.";
+  if (msg.includes("GRANOLAB_NO_SETTINGS")) return "지금은 신청을 받을 수 없어요. 이벤트 준비 중이에요.";
   switch (error.code) {
     case "23505":
       return "이미 신청한 번호예요.";

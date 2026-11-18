@@ -98,7 +98,8 @@
 - 설정 1줄: 정원 100 · 마감 2026-12-02 23:59:59 (한국 시간)
 - **가짜 신청자 12명** — `/stats` 가 처음부터 비어 보이지 않게 (번호는 `0100000xxxx` 가짜)
   - ⚠️ 이 12명도 정원 100명에 포함돼요 (실제 신청 가능 88명, 첫 신청자는 "13번째"). **실제로 오픈한다면 그 전에 지우기**:
-    `delete from public.granolab_applications where phone like '0100000%';`
+    `delete from public.granolab_applications where phone in ('01000000001','01000000002','01000000003','01000000004','01000000005','01000000006','01000000007','01000000008','01000000009','01000000010','01000000011','01000000012');`
+    (정확한 번호 12개만 지워요. `like '0100000%'` 처럼 넓게 지우면 비슷한 번호로 신청한 사람까지 지워질 수 있어요)
 
 | 채널 | 명 | 아침 습관 |
 |---|---|---|
@@ -111,7 +112,7 @@
 
 ## 7. SQL
 
-> ✅ 2026-11-18 적용 완료 — 마이그레이션 `create_granolab_schema` · `seed_granolab` · `revoke_unused_table_privileges`
+> ✅ 2026-11-18 적용 완료 — 마이그레이션 `create_granolab_schema` · `seed_granolab` · `revoke_unused_table_privileges` · `granolab_require_settings_row`(설정 줄 검사 추가, 아래 ④에 반영)
 > (마지막 것은 적용 후 점검에서 발견: Supabase 가 앱 권한에 기본으로 남겨 둔 `TRUNCATE`(표 통째로 비우기) 등을 회수. coroom 표도 같이 회수)
 
 ```sql
