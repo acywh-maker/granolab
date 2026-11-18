@@ -3,6 +3,7 @@
 import { startTransition, useActionState, useEffect, useState } from "react";
 import { applyAction, type ApplyState } from "@/app/actions";
 import { useLiveStats } from "@/components/useLiveStats";
+import { useOnline } from "@/components/useOnline";
 import {
   BREAKFAST_OPTIONS,
   checkApplication,
@@ -86,6 +87,7 @@ function ApplyForm({ utm }: { utm: UtmInput }) {
   const [agreed, setAgreed] = useState(false);
   const [state, action, pending] = useActionState<ApplyState, FormData>(applyAction, { message: "" });
   const [localError, setLocalError] = useState("");
+  const online = useOnline();
   // 브라우저에서 먼저 검사한 문구가 있으면 그걸, 없으면 서버가 돌려준 문구
   // (새로 신청하는 중에는 지난번 서버 문구를 숨겨서 헷갈리지 않게)
   const message = localError || (pending ? "" : state.message);
@@ -194,10 +196,10 @@ function ApplyForm({ utm }: { utm: UtmInput }) {
 
       <button
         type="submit"
-        disabled={pending}
+        disabled={pending || !online}
         className="min-h-13 rounded-2xl bg-emerald-700 px-6 py-4 text-lg font-bold text-white transition-colors hover:bg-emerald-800 disabled:opacity-60"
       >
-        {pending ? "신청하는 중…" : "무료 체험 신청하기"}
+        {!online ? "인터넷 연결 후 신청할 수 있어요" : pending ? "신청하는 중…" : "무료 체험 신청하기"}
       </button>
 
       <p className="text-center text-xs text-stone-400">

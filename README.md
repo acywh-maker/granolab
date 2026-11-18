@@ -1,36 +1,113 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# granolab — 말차 크런치 체험단 선착순 사전 신청
 
-## Getting Started
+> 가상 브랜드 **그래놀랩**이 신제품 "말차 크런치" 체험단 100명을 선착순으로 모으고, 어느 채널에서 신청이 들어왔는지 숫자로 볼 수 있게 만든 캠페인 웹페이지예요.
 
-First, run the development server:
+- 🔗 배포 링크: https://granolab-mu.vercel.app
+- ⚠️ 수업 과제용 **가상 이벤트**예요. 실제 이름 · 번호 대신 가짜 정보를 넣어 주세요.
+
+## 왜 만들었나요?
+
+출시 전 체험 후기를 모으면서, **어느 채널(인스타그램 · 카카오 등)에서 어떤 고객이 왔는지**를 마케터가 숫자로 바로 확인하고 싶었어요. 그러면서도 신청자 개인정보는 화면에 절대 드러나지 않게 하는 것이 목표예요.
+
+## 주요 기능
+
+- **랜딩 + 신청 폼** (`/`): 남은 자리 "N / 100"과 마감까지 남은 시간을 보여 주고, 이름 · 휴대폰 번호 · 아침 식사 습관 · 개인정보 동의를 받아요.
+- **실시간 남은 자리**: 누군가 신청하면 다른 사람 화면의 숫자도 새로고침 없이 줄어들어요.
+- **선착순 · 마감 · 중복 막기**: 100명이 차거나 마감일(2026-12-02 23:59, 한국 시간)이 지나면 신청을 받지 않아요. 같은 번호는 한 번만 신청할 수 있어요. 이 규칙은 DB가 직접 막아요.
+- **유입 경로 저장**: 주소의 `utm_source` · `utm_medium` · `utm_campaign`을 신청과 함께 저장해요. 없으면 `direct`로 저장해요.
+- **성과 페이지** (`/stats`): 총 신청 수 · 남은 자리 · 채널별 · 아침 습관별 신청 수를 숫자와 막대로 보여 줘요. **이름 · 번호는 어디에도 나오지 않아요.**
+
+## 기술 스택
+
+| 구분 | 사용한 것 |
+| --- | --- |
+| 프레임워크 | Next.js 16.4.6 (App Router) · React 19.3.0 · TypeScript 5 |
+| 스타일 | Tailwind CSS 4.3.3 |
+| DB · 실시간 | Supabase (`@supabase/supabase-js` 2.x) |
+| 배포 | Vercel |
+
+## 시작하기
+
+### 요구사항
+
+- Node.js (v24에서 확인했어요)
+- Supabase 프로젝트 1개
+
+### 설치 및 실행
+
+```bash
+git clone https://github.com/acywh-maker/granolab.git
+cd granolab
+npm install
+```
+
+1. Supabase 대시보드의 **SQL Editor**에서 [`DB.md`](DB.md)의 **7. SQL** 부분을 실행해 표와 함수를 만들어요.
+2. 아래 [환경 변수](#환경-변수--설정)를 `.env.local`에 채워요.
+3. 개발 서버를 켜요.
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+브라우저에서 http://localhost:3000 을 열면 돼요.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 환경 변수 / 설정
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+`.env.example`을 복사해 `.env.local`을 만들고 값을 채워요.
 
-## Learn More
+```bash
+cp .env.example .env.local
+```
 
-To learn more about Next.js, take a look at the following resources:
+| 이름 | 설명 | 어디서 찾나요 |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase 프로젝트 주소 | Supabase → Project Settings → API |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | 공개용(publishable) 키 | 같은 화면의 Publishable key |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+> secret key는 쓰지 않아요. 신청자 표는 잠겨 있고, 앱은 정해진 함수(`granolab_apply`, `granolab_stats`)로만 DB에 접근해요.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+정원(100명)과 마감 시각은 코드가 아니라 DB의 `granolab_settings` 표에서 바꿔요.
 
-## Deploy on Vercel
+## 사용법
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**채널별 링크로 신청 받기**
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+채널마다 utm을 붙인 링크를 따로 뿌려요.
+
+```
+https://granolab-mu.vercel.app/?utm_source=instagram&utm_medium=story&utm_campaign=matcha
+```
+
+이 링크로 들어와 신청하면 `instagram`으로 집계돼요.
+
+**성과 보기**
+
+`/stats`를 열어 두면 신청이 들어올 때마다 채널별 · 아침 습관별 숫자가 바로 바뀌어요.
+
+## 프로젝트 구조
+
+```
+app/
+  page.tsx          랜딩 + 신청 폼 (/)
+  actions.ts        신청 저장 (Server Action)
+  done/page.tsx     신청 완료 (/done) — "N번째 신청자예요"
+  stats/page.tsx    성과 페이지 (/stats)
+components/         신청 폼 · 통계 화면 · 실시간 숫자(useLiveStats)
+lib/                Supabase 연결 · 캠페인 설정 · 집계 · DB 타입
+PRD.md              기획 (기능과 완료 기준)
+DB.md               DB 설계와 SQL
+```
+
+## 현재 상태와 한계
+
+- 수업 과제용 가상 이벤트라 실제 개인정보를 받지 않아요. 데이터는 수업이 끝난 뒤 직접 지워요.
+- 로그인 · 관리자 화면 · 신청자 명단 다운로드는 일부러 만들지 않았어요.
+- `/stats`는 숫자만 보여서 지금은 누구나 볼 수 있어요.
+
+### 계획 중
+
+- 휴대폰 홈 화면에 앱처럼 설치하기 (PWA)
+
+## 라이선스
+
+개인 수업 과제용 저장소예요. 별도 라이선스는 없어요.
