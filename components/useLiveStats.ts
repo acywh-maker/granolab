@@ -55,24 +55,36 @@ export function useLiveStats(initial: Stats) {
     let timer: ReturnType<typeof setTimeout> | undefined;
     let running = false; // 지금 읽는 중인지
     let again = false; // 읽는 동안 신호가 또 왔는지
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    const RETRY_MS = 3000; // 읽기에 실패하면 3초 기다렸다 다시
 
     // 한 번에 하나씩만 읽어요 → 결과가 뒤바뀌어 도착할 일이 없어요
     const fetchStats = async () => {
       running = true;
+      let failed = false;
       try {
         do {
           again = false;
           const { data, error } = await getSupabase().rpc("granolab_stats");
-          if (alive && !error && data) setStats(data as unknown as Stats);
+          if (error || !data) {
+            failed = true;
+            break;
+          }
+          if (alive) setStats(data as unknown as Stats);
         } while (again && alive);
       } catch {
-        // 네트워크 문제 등 — 아래에서 잠시 뒤 다시 시도해요
-        again = true;
+        failed = true; // 네트워크 문제 등
       } finally {
         running = false;
       }
-      // 읽는 중에 신호가 또 왔거나 읽기에 실패했으면 한 번 더
-      if (again && alive) reload();
+      if (!alive) return;
+      if (failed) {
+        // 인터넷이 끊겼을 때 쉬지 않고 재시도하지 않도록 3초 기다리기
+        clearTimeout(retryTimer);
+        retryTimer = setTimeout(reload, RETRY_MS);
+      } else if (again) {
+        reload(); // 읽는 중에 신호가 또 왔으면 한 번 더
+      }
     };
 
     const reload = () => {
@@ -98,6 +110,7 @@ export function useLiveStats(initial: Stats) {
     return () => {
       alive = false;
       clearTimeout(timer);
+      clearTimeout(retryTimer);
       clearTimeout(sync);
       signalListeners.delete(reload);
       statusListeners.delete(setLive);
