@@ -14,6 +14,16 @@ export default function PwaSetup() {
     navigator.serviceWorker
       // updateViaCache: "none" → 도우미 파일(sw.js)을 항상 새로 확인해서, 새 버전이 나오면 바로 바뀌어요
       .register("/sw.js", { scope: "/", updateViaCache: "none" })
+      .then(() => navigator.serviceWorker.ready)
+      .then((reg) => {
+        // 이번 방문에서 이미 불러온 디자인 · 스크립트 파일 목록을 도우미에게 알려 저장하게 해요
+        // → 처음으로 인터넷이 끊겼을 때도 화면이 깨지지 않아요
+        const urls = performance
+          .getEntriesByType("resource")
+          .map((e) => e.name)
+          .filter((u) => u.startsWith(`${location.origin}/_next/static/`));
+        reg.active?.postMessage({ type: "cache-assets", urls });
+      })
       .catch(() => {});
   }, []);
 

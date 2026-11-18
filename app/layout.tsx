@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "그래놀랩",
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "default", // 시계 · 배터리가 잘 보이는 기본 상태 표시줄
   },
 };
 

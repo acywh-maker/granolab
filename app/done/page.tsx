@@ -4,7 +4,7 @@ import Link from "next/link";
 // 주소 /done — 신청 완료 (개인정보는 보여 주지 않고 "몇 번째"만)
 export default function DonePage({ searchParams }: PageProps<"/done">) {
   return (
-    <main className="mx-auto flex w-full max-w-xl flex-1 flex-col items-center justify-center gap-6 px-6 py-16 text-center">
+    <main className="mx-auto flex w-full max-w-xl flex-1 flex-col items-center justify-center gap-6 px-6 pb-40 pt-16 text-center">
       <Suspense fallback={<p className="text-stone-500">확인하는 중…</p>}>
         <DoneMessage searchParams={searchParams} />
       </Suspense>
