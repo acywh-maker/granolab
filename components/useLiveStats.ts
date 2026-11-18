@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { getSupabase } from "@/lib/supabase";
 import type { Stats } from "@/lib/campaign";
 
@@ -49,12 +49,6 @@ export function useLiveStats(initial: Stats) {
     setStats(initial);
   }
 
-  // 서버가 새 숫자를 줄 때마다 번호를 올려서, 그 전에 시작한 읽기 결과는 버려요
-  const generation = useRef(0);
-  useEffect(() => {
-    generation.current += 1;
-  }, [initial]);
-
   useEffect(() => {
     ensureChannel();
     let alive = true;
@@ -68,17 +62,17 @@ export function useLiveStats(initial: Stats) {
       try {
         do {
           again = false;
-          const startedAt = generation.current;
           const { data, error } = await getSupabase().rpc("granolab_stats");
-          if (alive && !error && data && startedAt === generation.current) {
-            setStats(data as unknown as Stats);
-          }
+          if (alive && !error && data) setStats(data as unknown as Stats);
         } while (again && alive);
       } catch {
-        // 네트워크 문제 등 — 다음 신호 때 다시 시도해요
+        // 네트워크 문제 등 — 아래에서 잠시 뒤 다시 시도해요
+        again = true;
       } finally {
         running = false;
       }
+      // 읽는 중에 신호가 또 왔거나 읽기에 실패했으면 한 번 더
+      if (again && alive) reload();
     };
 
     const reload = () => {
@@ -97,6 +91,9 @@ export function useLiveStats(initial: Stats) {
 
     signalListeners.add(reload);
     statusListeners.add(setLive);
+    // 화면이 (다시) 보일 때 한 번 새로 읽기
+    // Next.js 16 은 뒤로 가기 때 이전 화면을 그대로 다시 보여 줘서, 떠나 있던 동안의 신청을 반영하려면 필요해요
+    reload();
     const sync = setTimeout(() => setLive(isLive), 0); // 이미 연결돼 있으면 바로 표시
     return () => {
       alive = false;
