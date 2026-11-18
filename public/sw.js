@@ -6,7 +6,7 @@
 // 2) 이름에 버전 번호가 붙은 파일(/_next/static/...)은 바뀌지 않으니 저장해 두고 재사용해요.
 // 3) 신청(POST) · Supabase 요청(다른 주소)은 절대 건드리지 않아요 → 개인정보를 저장하지 않아요.
 
-const VERSION = "granolab-v2";
+const VERSION = "granolab-v3";
 const PAGES = `${VERSION}-pages`;
 const ASSETS = `${VERSION}-assets`;
 const OFFLINE_URL = "/";
@@ -21,8 +21,16 @@ const OFFLINE_HTML = `<!doctype html><html lang="ko"><head><meta charset="utf-8"
 <p style="color:#a8a29e">이 화면은 아직 저장돼 있지 않아요.<br>연결되면 다시 열어 주세요.</p>
 <p><a href="/" style="color:#CACFAB">처음 화면으로</a></p></div></body></html>`;
 
-// 주소에서 ?utm_source=... 같은 뒷부분을 빼고 저장 → 링크마다 따로 쌓이지 않게
-const pageKey = (url) => new Request(new URL(url).pathname);
+// 주소에서 utm_ 로 시작하는 값만 빼고 저장 → 캠페인 링크마다 따로 쌓이지 않게 (다른 값은 그대로)
+const pageKey = (raw) => {
+  const url = new URL(raw);
+  for (const name of [...url.searchParams.keys()]) {
+    if (name.startsWith("utm_")) url.searchParams.delete(name);
+  }
+  return new Request(url.pathname + url.search);
+};
+// 신청 완료 화면은 사람마다 숫자가 달라서 저장하지 않아요
+const shouldSavePage = (raw) => !new URL(raw).pathname.startsWith("/done");
 
 async function trimAssets() {
   const cache = await caches.open(ASSETS);
@@ -73,21 +81,31 @@ self.addEventListener("message", (event) => {
   );
 });
 
-// 인터넷 먼저 받되, 정해진 시간 안에 응답이 없으면 실패로 처리
-function fetchWithTimeout(req) {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("timeout")), NETWORK_TIMEOUT_MS);
-    fetch(req).then(
-      (res) => {
-        clearTimeout(timer);
-        resolve(res);
-      },
-      (err) => {
-        clearTimeout(timer);
-        reject(err);
-      },
-    );
+// 화면 받기: 인터넷 먼저.
+// - 4초가 지나도 응답이 없고 "저장해 둔 그 화면"이 있으면 → 저장본을 먼저 보여 줘요
+// - 저장본이 없으면 → 느려도 끝까지 기다려요 (신청 직후 화면에서 "끊겼어요"가 잘못 뜨지 않게)
+// - 인터넷이 아예 안 되면 → 저장본, 그것도 없으면 오프라인 안내
+async function handleNavigation(req) {
+  const key = pageKey(req.url);
+  const cached = await caches.match(key);
+
+  const network = fetch(req).then((res) => {
+    if (res.ok && shouldSavePage(req.url)) {
+      const copy = res.clone();
+      caches.open(PAGES).then((cache) => cache.put(key, copy));
+    }
+    return res;
   });
+
+  const offlinePage = () =>
+    new Response(OFFLINE_HTML, { headers: { "Content-Type": "text/html; charset=utf-8" } });
+
+  if (!cached) {
+    return network.catch(offlinePage);
+  }
+
+  const timeout = new Promise((resolve) => setTimeout(() => resolve(cached), NETWORK_TIMEOUT_MS));
+  return Promise.race([network.catch(() => cached), timeout]);
 }
 
 self.addEventListener("fetch", (event) => {
@@ -97,23 +115,9 @@ self.addEventListener("fetch", (event) => {
   // 다른 주소(Supabase 등) · GET 이 아닌 요청(신청 저장)은 그냥 통과
   if (req.method !== "GET" || url.origin !== self.location.origin) return;
 
-  // 화면 이동: 인터넷 먼저, 안 되면 저장해 둔 그 화면, 그것도 없으면 오프라인 안내
+  // 화면 이동
   if (req.mode === "navigate") {
-    event.respondWith(
-      fetchWithTimeout(req)
-        .then((res) => {
-          if (res.ok) {
-            const copy = res.clone();
-            caches.open(PAGES).then((cache) => cache.put(pageKey(req.url), copy));
-          }
-          return res;
-        })
-        .catch(
-          async () =>
-            (await caches.match(pageKey(req.url))) ||
-            new Response(OFFLINE_HTML, { headers: { "Content-Type": "text/html; charset=utf-8" } }),
-        ),
-    );
+    event.respondWith(handleNavigation(req));
     return;
   }
 
