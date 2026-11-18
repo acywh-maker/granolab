@@ -1,19 +1,11 @@
 "use client"; // 실시간으로 숫자가 바뀌어서 클라이언트 컴포넌트
 
-import { useCallback, useState } from "react";
-import { useLiveTotal } from "@/components/useLiveTotal";
-import { getSupabase } from "@/lib/supabase";
+import { useLiveStats } from "@/components/useLiveStats";
 import { breakfastLabel, type Stats } from "@/lib/campaign";
 
 export default function StatsView({ stats: initial }: { stats: Stats }) {
-  const [stats, setStats] = useState(initial);
-
-  // 새 신청 신호가 오면 → 집계 창구(숫자만)를 다시 불러와서 채널별 · 습관별 막대까지 바꾸기
-  const reload = useCallback(async () => {
-    const { data } = await getSupabase().rpc("granolab_stats");
-    if (data) setStats(data as unknown as Stats);
-  }, []);
-  const { live } = useLiveTotal(initial.total, reload);
+  // 새 신청 신호가 오면 → 집계 창구(숫자만)를 다시 읽어서 채널별 · 습관별 막대까지 바꾸기
+  const { stats, live } = useLiveStats(initial);
 
   const total = stats.total;
   const left = Math.max(stats.capacity - total, 0);

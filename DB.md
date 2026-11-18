@@ -87,7 +87,8 @@
 ## 5. 실시간 (남은 자리)
 
 - 신청이 저장될 때마다 DB 가 `granolab-stats` 라는 **공개 방송 채널**로 "**지금 N명**" 신호만 보내요 (이름 · 번호 없음).
-- 화면은 그 채널을 듣고 있다가 숫자를 바꿔요.
+- 화면은 그 신호를 **"바뀌었어요" 알림으로만** 쓰고, 숫자는 항상 `granolab_stats()` 에서 다시 읽어요.
+  공개 채널이라 누구나 가짜 신호("100명!")를 보낼 수 있기 때문이에요 (코드 검사에서 발견 → 수정).
 - coroom 은 표 변경을 그대로 받았지만(`postgres_changes`), granolab 은 표가 잠겨 있어서 **숫자만 방송(`broadcast`)** 하는 방식이에요.
 
 ---
@@ -96,6 +97,8 @@
 
 - 설정 1줄: 정원 100 · 마감 2026-12-02 23:59:59 (한국 시간)
 - **가짜 신청자 12명** — `/stats` 가 처음부터 비어 보이지 않게 (번호는 `0100000xxxx` 가짜)
+  - ⚠️ 이 12명도 정원 100명에 포함돼요 (실제 신청 가능 88명, 첫 신청자는 "13번째"). **실제로 오픈한다면 그 전에 지우기**:
+    `delete from public.granolab_applications where phone like '0100000%';`
 
 | 채널 | 명 | 아침 습관 |
 |---|---|---|
@@ -157,6 +160,9 @@ declare
 begin
   perform pg_advisory_xact_lock(hashtext('granolab_applications'));  -- 줄 세우기
   select * into s from public.granolab_settings where id = 1;
+  if not found or s.deadline is null or s.capacity is null then   -- (코드 검사 후 추가) 설정이 없으면 거절
+    raise exception 'GRANOLAB_NO_SETTINGS';
+  end if;
   if now() > s.deadline then
     raise exception 'GRANOLAB_CLOSED';
   end if;

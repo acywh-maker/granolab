@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import StatsView from "@/components/StatsView";
+import StatsSkeleton from "@/components/StatsSkeleton";
 import { getStats } from "@/lib/stats";
-import Loading from "../loading";
 
 // 주소 /stats — 채널별 · 아침 습관별 신청 수 (숫자만, 개인정보 없음)
 export default function StatsPage() {
@@ -11,7 +11,7 @@ export default function StatsPage() {
         <h1 className="text-2xl font-extrabold text-stone-900">캠페인 성과</h1>
         <p className="mt-1 text-sm text-stone-500">말차 크런치 체험단 · 이름 · 번호 없이 숫자만 보여요</p>
       </div>
-      <Suspense fallback={<Loading />}>
+      <Suspense fallback={<StatsSkeleton />}>
         <StatsSection />
       </Suspense>
     </main>

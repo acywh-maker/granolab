@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import SignupSection from "@/components/SignupSection";
+import StatsSkeleton from "@/components/StatsSkeleton";
 import { getNow, getStats } from "@/lib/stats";
-import Loading from "./loading";
 
 // 주소 / — 랜딩 + 신청 (서버 컴포넌트)
 // 위쪽 소개는 미리 만들어 두고, 숫자 · 폼 부분만 요청마다 DB 에서 읽어요.
@@ -37,7 +37,7 @@ export default function Home({ searchParams }: PageProps<"/">) {
       </ul>
 
       {/* 남은 자리 · 신청 폼 — DB 를 읽는 동안 "불러오는 중" */}
-      <Suspense fallback={<Loading />}>
+      <Suspense fallback={<StatsSkeleton />}>
         <LiveSection searchParams={searchParams} />
       </Suspense>
     </main>

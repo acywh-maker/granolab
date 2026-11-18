@@ -2,9 +2,10 @@
 
 import { startTransition, useActionState, useEffect, useState } from "react";
 import { applyAction, type ApplyState } from "@/app/actions";
-import { useLiveTotal } from "@/components/useLiveTotal";
+import { useLiveStats } from "@/components/useLiveStats";
 import {
   BREAKFAST_OPTIONS,
+  checkApplication,
   formatDeadline,
   formatRemaining,
   type Stats,
@@ -13,8 +14,9 @@ import {
 
 type Props = { stats: Stats; utm: UtmInput; serverNow: number };
 
-export default function SignupSection({ stats, utm, serverNow }: Props) {
-  const { total, live } = useLiveTotal(stats.total);
+export default function SignupSection({ stats: initial, utm, serverNow }: Props) {
+  const { stats, live } = useLiveStats(initial);
+  const total = stats.total;
   const [now, setNow] = useState(serverNow);
 
   // 1분마다 남은 시간 다시 계산
@@ -84,6 +86,9 @@ function ApplyForm({ utm }: { utm: UtmInput }) {
   const [breakfast, setBreakfast] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [state, action, pending] = useActionState<ApplyState, FormData>(applyAction, { message: "" });
+  const [localError, setLocalError] = useState("");
+  // 브라우저에서 먼저 검사한 문구가 있으면 그걸, 없으면 서버가 돌려준 문구
+  const message = localError || state.message;
 
   const fieldClass =
     "w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-base outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20";
@@ -93,6 +98,10 @@ function ApplyForm({ utm }: { utm: UtmInput }) {
       // form action 을 그대로 쓰면 보낸 뒤 입력칸이 비워져서, 직접 모아서 보내요
       onSubmit={(e) => {
         e.preventDefault();
+        // 브라우저에서 먼저 검사 (편의) — 서버도 같은 검사를 한 번 더 해요 (안전)
+        const problem = checkApplication({ name, phone, breakfast, agreed });
+        setLocalError(problem ?? "");
+        if (problem) return;
         const formData = new FormData(e.currentTarget);
         startTransition(() => action(formData));
       }}
@@ -129,7 +138,7 @@ function ApplyForm({ utm }: { utm: UtmInput }) {
           inputMode="numeric"
           autoComplete="tel"
           maxLength={13}
-          placeholder="010-0000-0000"
+          placeholder="010-1234-5678"
           className={fieldClass}
         />
       </label>
@@ -177,9 +186,9 @@ function ApplyForm({ utm }: { utm: UtmInput }) {
         </span>
       </label>
 
-      {state.message && (
+      {message && (
         <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
-          {state.message}
+          {message}
         </p>
       )}
 
@@ -192,7 +201,7 @@ function ApplyForm({ utm }: { utm: UtmInput }) {
       </button>
 
       <p className="text-center text-xs text-stone-400">
-        ※ 수업용 가상 이벤트예요. 실제 이름 · 번호 대신 가짜 정보를 넣어 주세요.
+        ※ 수업용 가상 이벤트예요. 실제 이름 · 번호 대신 가짜 정보를 넣어 주세요. (예: 010-1234-5678)
       </p>
     </form>
   );
